@@ -296,7 +296,17 @@ section{padding-block:clamp(64px,9vw,120px)}
    実績（差し替え枠）
    =========================================================== */
 .works{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:clamp(18px,2.5vw,28px)}
-.work{border:var(--line);background:#fff}
+.work{border:var(--line);background:#fff;transition:border-color .2s,transform .2s}
+.work a{text-decoration:none;display:flex;flex-direction:column;height:100%}
+.work:hover{border-color:var(--ink);transform:translateY(-2px)}
+.work .meta{flex:1;display:flex;flex-direction:column}
+.work .more{
+  display:inline-block;margin-top:auto;padding-top:16px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--vermilion);
+}
+.work .more::after{content:" →";transition:margin .2s}
+.work:hover .more::after{margin-left:4px}
+.swipe-hint{display:none}
 .work .thumb{
   aspect-ratio:16/10;background:var(--paper-2);
   border-bottom:var(--line);
@@ -340,6 +350,31 @@ section{padding-block:clamp(64px,9vw,120px)}
 .gallery figcaption{font-size:11.5px;color:var(--ink-3);padding:8px 10px;border-top:var(--line);background:var(--paper-2)}
 .feature .actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
 .feature .disclaim{font-size:12.5px;color:var(--ink-3);margin:16px 0 0;max-width:80ch}
+
+/* スマートフォン：縦に伸ばさず、横スワイプで見せる ---------- */
+@media (max-width:720px){
+  .gallery,.works{
+    grid-template-columns:none;
+    grid-auto-flow:column;
+    grid-auto-columns:78%;
+    overflow-x:auto;
+    overscroll-behavior-x:contain;
+    scroll-snap-type:x proximity;
+    padding-bottom:12px;
+    /* スクロールできることが分かるよう、右端を少しはみ出させる */
+    margin-right:calc(-1 * var(--pad));
+    padding-right:var(--pad);
+  }
+  .works{grid-auto-columns:84%}
+  .gallery figure,.work{scroll-snap-align:start}
+  .work{height:auto}
+  .swipe-hint{
+    display:block;margin:0 0 12px;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--ink-3);
+  }
+  .feature .facts{margin-bottom:16px}
+  .feature p{margin-bottom:14px}
+}
 
 /* ===========================================================
    料金
@@ -798,33 +833,42 @@ section{padding-block:clamp(64px,9vw,120px)}
       </div>
     </article>
 
-    <!-- ▼ 差し替え枠：画像は works/ に置き、<span>…</span> を <img src="works/xxx.png" alt=""> に置き換えてください -->
+    <p class="swipe-hint">← 横にスワイプできます →</p>
     <div class="works">
       <article class="work rise">
-        <div class="thumb"><span>IMAGE 01</span></div>
-        <div class="meta">
-          <h3><span class="todo">案件名を記入</span></h3>
-          <p><span class="todo">依頼内容と、担当した範囲・成果を2行程度で記入</span></p>
-          <div class="tags"><i>QA</i><i>TEST DESIGN</i></div>
-        </div>
+        <a href="works/テスト設計書_Rezerva_サンプル.pdf" target="_blank" rel="noopener">
+          <div class="thumb"><img src="works/work-testplan.png" alt="テスト設計書サンプルの誌面"></div>
+          <div class="meta">
+            <h3>テスト設計書（会議室予約システム）</h3>
+            <p>72ケースを機能・観点で整理。実施結果を記録できる列と、機能×観点のカバレッジ表つき。</p>
+            <div class="tags"><i>QA</i><i>TEST DESIGN</i></div>
+            <span class="more">PDFで見る</span>
+          </div>
+        </a>
       </article>
 
       <article class="work rise">
-        <div class="thumb"><span>IMAGE 02</span></div>
-        <div class="meta">
-          <h3><span class="todo">案件名を記入</span></h3>
-          <p><span class="todo">依頼内容と、担当した範囲・成果を2行程度で記入</span></p>
-          <div class="tags"><i>DOCUMENT</i><i>MANUAL</i></div>
-        </div>
+        <a href="works/操作マニュアル_Rezerva_サンプル.pdf" target="_blank" rel="noopener">
+          <div class="thumb"><img src="works/work-manual.png" alt="操作マニュアルサンプルの誌面"></div>
+          <div class="meta">
+            <h3>操作マニュアル（利用者向け）</h3>
+            <p>全11ページ。実際の画面キャプチャつきで、予約からキャンセルまでの手順と、管理者だけが使う機能を章で分けています。</p>
+            <div class="tags"><i>DOCUMENT</i><i>MANUAL</i></div>
+            <span class="more">PDFで見る</span>
+          </div>
+        </a>
       </article>
 
       <article class="work rise">
-        <div class="thumb"><span>IMAGE 03</span></div>
-        <div class="meta">
-          <h3><span class="todo">案件名を記入</span></h3>
-          <p><span class="todo">依頼内容と、担当した範囲・成果を2行程度で記入</span></p>
-          <div class="tags"><i>WEB</i><i>HTML / CSS</i></div>
-        </div>
+        <a href="#top">
+          <div class="thumb"><img src="works/work-site.png" alt="このポートフォリオサイトのPC表示とスマートフォン表示"></div>
+          <div class="meta">
+            <h3>このポートフォリオサイト</h3>
+            <p>HTML／CSSで制作。図版・アイコンはすべて自作で、外部の画像素材や外部ライブラリを使っていません。</p>
+            <div class="tags"><i>WEB</i><i>HTML / CSS</i></div>
+            <span class="more">このページを最初から見る</span>
+          </div>
+        </a>
       </article>
     </div>
   </div>

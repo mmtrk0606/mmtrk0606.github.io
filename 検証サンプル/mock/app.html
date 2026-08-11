@@ -85,6 +85,19 @@
   body.sp main{padding:16px 14px 40px}
   body.sp .card{overflow:visible}
   body.sp table{width:760px}
+
+  /* ログイン画面（マニュアル用） */
+  body.bare .app{grid-template-columns:1fr}
+  body.bare .side,body.bare .head{display:none}
+  body.bare main{padding:0;display:grid;place-items:center;min-height:100vh;background:var(--bg)}
+  .login{width:380px;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:32px 30px}
+  .login .lg{font-size:26px;font-weight:700;text-align:center;margin-bottom:6px}
+  .login .lg span{color:var(--brand)}
+  .login .sub{text-align:center;color:var(--ink3);font-size:12.5px;margin-bottom:24px}
+  .login label{display:block;font-size:12.5px;color:var(--ink2);margin-bottom:6px;font-weight:600}
+  .login .fld{margin-bottom:16px}
+  .login input{width:100%}
+  .login .btn{width:100%;margin-top:6px;padding:11px}
 </style>
 </head>
 <body>
@@ -302,8 +315,173 @@ V.rooms = {
 /* ── スマホ表示（テーブルがはみ出す） ──────────────────── */
 V.sp = { ...V.list, sp: true };
 
+/* ══════════════════════════════════════════════════════
+   ここから下は操作マニュアル用の画面（正常に動作している状態）
+   ※上の各 view は不具合の再現用なので、マニュアルには使わない
+   ══════════════════════════════════════════════════════ */
+
+/* ── ログイン ────────────────────────────────────────── */
+V.login = {
+  title: "ログイン", head: ``, bare: true,
+  body: `
+  <form class="login">
+    <div class="lg">Re<span>z</span>erva</div>
+    <div class="sub">会議室予約システム</div>
+    <div class="fld">
+      <label>メールアドレス</label>
+      <input type="text" value="hanako@example.com">
+    </div>
+    <div class="fld">
+      <label>パスワード</label>
+      <input type="text" value="••••••••••">
+    </div>
+    <button class="btn pri">ログイン</button>
+  </form>`,
+};
+
+/* ── 予約一覧（正常） ────────────────────────────────── */
+V.list_ok = {
+  title: "予約一覧",
+  head: `<button class="btn">CSV出力</button><button class="btn pri">＋ 新規予約</button>`,
+  body: `
+  <div class="card">
+    <div class="ch">2026年8月18日（月）の予約　<span class="muted" style="font-weight:400;font-size:12.5px">全 4 件</span></div>
+    <table>
+      <thead><tr><th style="width:130px">会議室</th><th style="width:150px">時間</th><th>件名</th><th style="width:110px">予約者</th><th style="width:90px">状態</th><th style="width:120px"></th></tr></thead>
+      <tbody>
+        <tr><td>会議室A（8名）</td><td>09:00 – 10:00</td><td>朝会</td><td>検証 花子</td><td><span class="tag ok">確定</span></td><td><button class="btn sm">詳細</button></td></tr>
+        <tr><td>会議室A（8名）</td><td>10:00 – 12:00</td><td>採用面接</td><td>山田 一郎</td><td><span class="tag ok">確定</span></td><td><button class="btn sm">詳細</button></td></tr>
+        <tr><td>会議室B（4名）</td><td>13:00 – 14:00</td><td>1on1</td><td>佐藤 次郎</td><td><span class="tag ok">確定</span></td><td><button class="btn sm">詳細</button></td></tr>
+        <tr><td>会議室B（4名）</td><td>15:00 – 16:00</td><td>取引先来訪</td><td>鈴木 三郎</td><td><span class="tag ok">確定</span></td><td><button class="btn sm">詳細</button></td></tr>
+      </tbody>
+    </table>
+  </div>`,
+};
+
+/* ── 新規予約フォーム（正常） ────────────────────────── */
+V.create_ok = {
+  title: "新規予約", head: ``,
+  body: `
+  <div class="card" style="max-width:760px">
+    <div class="ch">予約内容</div>
+    <div class="form">
+      <div class="k">会議室 <span class="req">必須</span></div>
+      <div class="v"><select><option>会議室A（8名）</option></select></div>
+
+      <div class="k">利用日 <span class="req">必須</span></div>
+      <div class="v"><input type="text" value="2026-08-18" style="max-width:180px"></div>
+
+      <div class="k">時間 <span class="req">必須</span></div>
+      <div class="v">
+        <div class="row">
+          <select style="width:110px"><option>10:00</option></select>
+          <span>〜</span>
+          <select style="width:110px"><option>11:00</option></select>
+        </div>
+        <div class="hint">30分単位で指定できます（営業時間 8:00〜22:00）</div>
+      </div>
+
+      <div class="k">件名 <span class="req">必須</span></div>
+      <div class="v"><input type="text" value="部門定例ミーティング"></div>
+
+      <div class="k">備考</div>
+      <div class="v"><textarea>プロジェクターを使用します</textarea></div>
+    </div>
+    <div class="foot"><button class="btn">戻る</button><button class="btn pri">この内容で予約する</button></div>
+  </div>`,
+};
+
+/* ── 登録完了 ────────────────────────────────────────── */
+V.done = {
+  title: "予約一覧",
+  head: `<button class="btn">CSV出力</button><button class="btn pri">＋ 新規予約</button>`,
+  body: `
+  <div class="alert suc"><span class="ic">✓</span><div>予約を登録しました。（予約番号：<b>RZ-20260818-0043</b>）</div></div>
+  <div class="card">
+    <div class="ch">2026年8月18日（月）の予約　<span class="muted" style="font-weight:400;font-size:12.5px">全 5 件</span></div>
+    <table>
+      <thead><tr><th style="width:130px">会議室</th><th style="width:150px">時間</th><th>件名</th><th style="width:110px">予約者</th><th style="width:90px">状態</th></tr></thead>
+      <tbody>
+        <tr><td>会議室A（8名）</td><td>09:00 – 10:00</td><td>朝会</td><td>検証 花子</td><td><span class="tag ok">確定</span></td></tr>
+        <tr style="background:#EFF5FF"><td>会議室A（8名）</td><td><b>10:00 – 11:00</b></td><td><b>部門定例ミーティング</b></td><td>検証 花子</td><td><span class="tag ok">確定</span></td></tr>
+        <tr><td>会議室A（8名）</td><td>11:00 – 12:00</td><td>採用面接</td><td>山田 一郎</td><td><span class="tag ok">確定</span></td></tr>
+        <tr><td>会議室B（4名）</td><td>13:00 – 14:00</td><td>1on1</td><td>佐藤 次郎</td><td><span class="tag ok">確定</span></td></tr>
+        <tr><td>会議室B（4名）</td><td>15:00 – 16:00</td><td>取引先来訪</td><td>鈴木 三郎</td><td><span class="tag ok">確定</span></td></tr>
+      </tbody>
+    </table>
+  </div>`,
+};
+
+/* ── 自分の予約（正常） ──────────────────────────────── */
+V.mine_ok = {
+  title: "自分の予約", head: ``,
+  body: `
+  <div class="card">
+    <div class="ch">今後の予約　<span class="muted" style="font-weight:400;font-size:12.5px">全 3 件</span></div>
+    <table>
+      <thead><tr><th style="width:170px">日時</th><th style="width:140px">会議室</th><th>件名</th><th style="width:110px">状態</th><th style="width:200px"></th></tr></thead>
+      <tbody>
+        <tr>
+          <td>08/18（月）10:00 –</td><td>会議室A</td><td>部門定例ミーティング</td><td><span class="tag ok">確定</span></td>
+          <td class="row" style="gap:6px"><button class="btn sm">編集</button><button class="btn sm dan">キャンセル</button></td>
+        </tr>
+        <tr>
+          <td>08/19（火）14:00 –</td><td>会議室B</td><td>1on1</td><td><span class="tag ok">確定</span></td>
+          <td class="row" style="gap:6px"><button class="btn sm">編集</button><button class="btn sm dan">キャンセル</button></td>
+        </tr>
+        <tr>
+          <td>08/20（水）09:00 –</td><td>会議室A</td><td>プロジェクト定例</td><td><span class="tag gr">キャンセル済</span></td>
+          <td class="muted" style="font-size:12px">—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="hint" style="margin-top:12px">※ キャンセルは利用開始の1時間前まで可能です。</p>`,
+};
+
+/* ── 予約の編集（自分の予約） ────────────────────────── */
+V.edit_ok = {
+  title: "予約の編集", head: ``,
+  body: `
+  <div class="card" style="max-width:760px">
+    <div class="ch">予約番号 RZ-20260818-0043</div>
+    <div class="form">
+      <div class="k">予約者</div>
+      <div class="v"><b>検証 花子</b> <span class="muted">（hanako@example.com）</span></div>
+      <div class="k">会議室</div>
+      <div class="v"><select><option>会議室A（8名）</option></select></div>
+      <div class="k">利用日</div>
+      <div class="v"><input type="text" value="2026-08-18" style="max-width:180px"></div>
+      <div class="k">時間</div>
+      <div class="v"><div class="row"><select style="width:110px"><option>14:00</option></select><span>〜</span><select style="width:110px"><option>15:00</option></select></div></div>
+      <div class="k">件名</div>
+      <div class="v"><input type="text" value="部門定例ミーティング"></div>
+    </div>
+    <div class="foot"><button class="btn">戻る</button><button class="btn pri">変更を保存</button></div>
+  </div>`,
+};
+
+/* ── 会議室管理（正常） ──────────────────────────────── */
+V.rooms_ok = {
+  title: "会議室管理",
+  head: `<button class="btn pri">＋ 会議室を追加</button>`,
+  body: `
+  <div class="card">
+    <div class="ch">会議室　<span class="muted" style="font-weight:400;font-size:12.5px">全 3 件</span></div>
+    <table>
+      <thead><tr><th style="width:180px">名称</th><th style="width:100px">定員</th><th>設備</th><th style="width:110px">状態</th><th style="width:140px"></th></tr></thead>
+      <tbody>
+        <tr><td>会議室A</td><td>8名</td><td>プロジェクター／ホワイトボード</td><td><span class="tag ok">利用可</span></td><td class="row" style="gap:6px"><button class="btn sm">編集</button><button class="btn sm dan">削除</button></td></tr>
+        <tr><td>会議室B</td><td>4名</td><td>モニター</td><td><span class="tag ok">利用可</span></td><td class="row" style="gap:6px"><button class="btn sm">編集</button><button class="btn sm dan">削除</button></td></tr>
+        <tr><td>会議室C</td><td>12名</td><td>プロジェクター／Web会議端末</td><td><span class="tag ok">利用可</span></td><td class="row" style="gap:6px"><button class="btn sm">編集</button><button class="btn sm dan">削除</button></td></tr>
+      </tbody>
+    </table>
+  </div>`,
+};
+
 const v = V[view] || V.list;
 if (v.sp) document.body.classList.add("sp");
+if (v.bare) document.body.classList.add("bare");
 document.getElementById("ttl").textContent = v.title;
 document.getElementById("hr").innerHTML = v.head;
 document.getElementById("main").innerHTML = v.body;

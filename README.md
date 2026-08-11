@@ -10,23 +10,52 @@
 ├── index.html                          ポートフォリオサイト本体
 ├── works/                              サイトに載せる成果物
 │   ├── rotaria-01/03/08/11/13.png      営業資料サンプルのページ画像
-│   └── Rotaria_サービス紹介資料_サンプル.pdf
+│   ├── rezerva-cover/list/views/screen.png  不具合レポートのページ画像
+│   ├── work-testplan/manual/site.png   実績カードのサムネイル（16:10）
+│   └── *.pdf                           各サンプルの配布用PDF
 ├── 営業資料サンプル/
 │   ├── build.js                        15ページを生成するスクリプト
 │   ├── node_modules -> lms-pptx生成のものをsymlink
 │   └── out/                            pptx / pdf / 各ページpng
+├── 検証サンプル/
+│   ├── mock/app.html                   架空システム Rezerva のモック画面
+│   ├── build_report.py                 不具合レポート（10件）を生成
+│   ├── build_testplan.py               テスト設計書（72ケース）を生成
+│   ├── build_manual.py                 操作マニュアル（11ページ）を生成
+│   ├── shots/                          不具合の証跡スクリーンショット
+│   ├── manual_shots/                   マニュアル用の画面キャプチャ
+│   └── out/                            xlsx / docx / pdf
 └── ランサーズ提案文_営業資料デザイン.txt   応募文（【　】を埋めて使う）
 ```
 
 公開URL: https://mmtrk0606.github.io/
 
-## 残りの未記入箇所
+## 実績セクションの構成
 
-`index.html` の中で黄色マーカー（`class="todo"`）が付いている箇所。
-実績の下段3枠のみ未記入で、受注実績ができ次第そこに入れる。
+主役2本（`.feature`）＋下段カード3枚（`.work`）。
+下段カードは**サムネイル＋1〜2行＋リンク先**だけに留める。
+ページを縦に伸ばさないための制約なので、ここに長文を足さない。
 
-画像は `works/` に置き、`<span>IMAGE 01</span>` を
-`<img src="works/xxx.png" alt="">` に置き換え、`.todo` の span を外す。
+受注実績ができたらカードを差し替える。未記入のまま置くときは
+`class="todo"`（黄色マーカー）を付けておくと、公開前に気付ける。
+
+## 検証サンプルの作り直し
+
+```bash
+cd ~/Desktop/ポートフォリオ/検証サンプル
+python3 build_report.py      # 不具合レポート  → out/*.xlsx
+python3 build_testplan.py    # テスト設計書    → out/*.xlsx
+python3 build_manual.py      # 操作マニュアル  → out/*.docx
+
+cd out
+/Applications/LibreOffice.app/Contents/MacOS/soffice --headless \
+  --convert-to pdf --outdir . *.xlsx *.docx
+```
+
+`mock/app.html` はクエリで画面を切り替える。
+`?v=list` 系は**不具合の再現用**（重複予約や 16:00〜14:00 など、わざと壊した状態）、
+`?v=*_ok` と `?v=login` `?v=done` が**マニュアル用の正常な状態**。
+マニュアルに再現用の画面を使わないこと。
 
 ## 営業資料サンプルの作り直し
 
