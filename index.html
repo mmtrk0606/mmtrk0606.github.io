@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>河村｜動作検証・テスト設計・資料作成・業務自動化</title>
+<meta name="description" content="SaaSの品質保証・LP制作・機能説明資料・業務自動化を一人で対応します。開発者がそのまま修正に着手できる不具合レポートを納品します。">
+<style>
+/* ===========================================================
+   トークン
+   =========================================================== */
+:root{
+  --paper:#FAF8F3;
+  --paper-2:#F3EFE6;
+  --ink:#16233D;
+  --ink-2:#4A5670;
+  --ink-3:#7C8598;
+  --rule:#DED7C9;
+  --rule-2:#EBE5D9;
+  --vermilion:#C0442B;
+  --vermilion-soft:#F0DCD6;
+  --line:1px solid var(--rule);
+
+  --serif:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP",serif;
+  --sans:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+  --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+
+  --pad:clamp(20px,5vw,64px);
+  --maxw:1120px;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.9;
+  font-feature-settings:"palt" 1;
+  overflow-x:hidden;
+}
+img{max-width:100%;display:block}
+a{color:inherit}
+
+/* 方眼の地紋 ------------------------------------------------ */
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  pointer-events:none; z-index:0;
+  background-image:
+    linear-gradient(var(--rule-2) 1px,transparent 1px),
+    linear-gradient(90deg,var(--rule-2) 1px,transparent 1px);
+  background-size:32px 32px;
+  opacity:.55;
+  mask-image:radial-gradient(ellipse 120% 90% at 50% 0%,#000 20%,transparent 78%);
+}
+.wrap{position:relative;z-index:1;max-width:var(--maxw);margin-inline:auto;padding-inline:var(--pad)}
+
+/* ===========================================================
+   セクション共通：番号 + 寸法線見出し
+   =========================================================== */
+section{padding-block:clamp(64px,9vw,120px)}
+.sec-head{margin-bottom:clamp(32px,5vw,56px)}
+.sec-num{
+  font-family:var(--mono);
+  font-size:12px; letter-spacing:.18em;
+  color:var(--vermilion);
+  display:block; margin-bottom:10px;
+}
+.sec-title{
+  font-family:var(--serif);
+  font-weight:600;
+  font-size:clamp(24px,3.6vw,36px);
+  line-height:1.5;
+  letter-spacing:.02em;
+  margin:0;
+  max-width:34ch;
+}
+.sec-lead{
+  margin:16px 0 0;
+  max-width:74ch;
+  color:var(--ink-2);
+  font-size:15px;
+}
+/* 寸法線：スクロールで左から伸び、両端にティックが立つ */
+.dim{
+  position:relative;
+  height:14px;
+  margin-top:20px;
+}
+.dim::before{
+  content:""; position:absolute; left:0; top:7px; height:1px;
+  width:0; background:var(--ink);
+  transition:width 1.1s cubic-bezier(.22,.7,.2,1);
+}
+.dim span{
+  position:absolute; top:0; width:1px; height:14px; background:var(--ink);
+  opacity:0; transition:opacity .4s ease .5s;
+}
+.dim span:first-child{left:0}
+.dim span:last-child{left:min(220px,42vw)}
+.in .dim::before{width:min(220px,42vw)}
+.in .dim span{opacity:1}
+
+/* 汎用の入場 */
+.rise{opacity:0;transform:translateY(14px);transition:opacity .7s ease,transform .7s cubic-bezier(.22,.7,.2,1)}
+.in .rise,.rise.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  .rise{opacity:1;transform:none;transition:none}
+  .dim::before{width:min(220px,42vw);transition:none}
+  .dim span{opacity:1;transition:none}
+}
+
+/* ===========================================================
+   ヘッダー
+   =========================================================== */
+.site-head{
+  position:relative; z-index:2;
+  border-bottom:var(--line);
+  background:color-mix(in srgb,var(--paper) 86%,transparent);
+  backdrop-filter:blur(6px);
+  position:sticky; top:0;
+}
+.site-head .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:14px}
+.brand{font-family:var(--serif);font-size:17px;letter-spacing:.08em;text-decoration:none}
+.brand small{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--ink-3);display:block;margin-top:2px}
+.nav{display:flex;gap:22px;font-size:13px}
+.nav a{text-decoration:none;color:var(--ink-2);transition:color .2s}
+.nav a:hover{color:var(--vermilion)}
+@media (max-width:720px){.nav{display:none}}
+
+/* ===========================================================
+   FV
+   =========================================================== */
+.fv{padding-block:clamp(56px,10vw,112px) clamp(48px,7vw,88px)}
+.fv-tag{
+  font-family:var(--mono); font-size:11px; letter-spacing:.2em;
+  color:var(--ink-3); margin:0 0 22px;
+}
+.fv h1{
+  font-family:var(--serif);
+  font-weight:600;
+  font-size:clamp(30px,6vw,60px);
+  line-height:1.42;
+  letter-spacing:.01em;
+  margin:0;
+  max-width:26ch;
+}
+.fv h1 em{font-style:normal;position:relative;white-space:nowrap}
+.fv h1 em::after{
+  content:""; position:absolute; left:0; right:0; bottom:.08em; height:.42em;
+  background:var(--vermilion-soft); z-index:-1;
+}
+.fv p{max-width:70ch;margin:28px 0 0;color:var(--ink-2)}
+.fv-cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:38px}
+.btn{
+  display:inline-block; text-decoration:none;
+  padding:14px 30px; font-size:14px; letter-spacing:.04em;
+  border:1px solid var(--ink); background:var(--ink); color:var(--paper);
+  transition:background .2s,color .2s,transform .2s;
+}
+.btn:hover{background:var(--vermilion);border-color:var(--vermilion);transform:translateY(-1px)}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.ghost:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+/* FVの図面カード：検査票 */
+.spec-card{
+  margin-top:clamp(44px,6vw,72px);
+  border:1px solid var(--ink);
+  background:#fff;
+  box-shadow:8px 8px 0 var(--rule-2);
+}
+.spec-card .row{display:grid;grid-template-columns:repeat(4,1fr)}
+.spec-card .cell{padding:20px 22px;border-right:var(--line)}
+.spec-card .cell:last-child{border-right:0}
+.spec-card .k{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--ink-3);display:block;margin-bottom:6px}
+.spec-card .v{font-family:var(--serif);font-size:clamp(18px,2.4vw,26px);line-height:1.3}
+.spec-card .v small{font-size:12px;font-family:var(--sans);color:var(--ink-2);margin-left:4px}
+@media (max-width:720px){
+  .spec-card .row{grid-template-columns:1fr 1fr}
+  .spec-card .cell{border-bottom:var(--line)}
+  .spec-card .cell:nth-child(2n){border-right:0}
+  .spec-card .cell:nth-last-child(-n+2){border-bottom:0}
+}
+
+/* ===========================================================
+   対応領域
+   =========================================================== */
+.svc{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:var(--rule);border:var(--line)}
+.svc article{background:var(--paper);padding:clamp(24px,3vw,34px)}
+.svc h3{font-family:var(--serif);font-size:19px;margin:0 0 4px;font-weight:600}
+.svc .en{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--vermilion);display:block;margin-bottom:14px}
+.svc p{margin:0 0 16px;font-size:14.5px;color:var(--ink-2);max-width:44ch}
+.svc ul{margin:0;padding:0;list-style:none;font-size:13px;color:var(--ink-2)}
+.svc li{padding-left:16px;position:relative;line-height:1.85}
+.svc li::before{content:"";position:absolute;left:0;top:.85em;width:7px;height:1px;background:var(--vermilion)}
+
+/* ===========================================================
+   仕事の見本（バグレポート）
+   =========================================================== */
+.sample{border:1px solid var(--ink);background:#fff}
+.sample-bar{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;
+  padding:14px 20px;border-bottom:1px solid var(--ink);
+  background:var(--ink);color:var(--paper);
+}
+.sample-bar strong{font-family:var(--serif);font-weight:600;font-size:15px;letter-spacing:.04em}
+.sample-bar span{font-family:var(--mono);font-size:11px;letter-spacing:.12em;opacity:.75}
+.sample-bar .sev{
+  margin-left:auto;font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  border:1px solid var(--vermilion);color:#fff;background:var(--vermilion);padding:2px 10px;
+}
+.sample dl{margin:0;display:grid;grid-template-columns:150px 1fr}
+.sample dt{
+  padding:16px 20px;border-bottom:var(--line);border-right:var(--line);
+  background:var(--paper-2);
+  font-size:12.5px;letter-spacing:.06em;color:var(--ink-2);
+}
+.sample dd{padding:16px 22px;border-bottom:var(--line);margin:0;font-size:14.5px}
+.sample dl > :nth-last-child(-n+2){border-bottom:0}
+.sample ol{margin:0;padding-left:1.3em;font-size:14px}
+.sample ol li{margin-bottom:2px}
+.sample code{
+  font-family:var(--mono);font-size:12.5px;
+  background:var(--paper-2);border:var(--line);padding:1px 6px;
+}
+.sample .bad{color:var(--vermilion);font-weight:600}
+@media (max-width:720px){
+  .sample dl{grid-template-columns:1fr}
+  .sample dt{border-right:0;padding-bottom:0;background:transparent;border-bottom:0}
+  .sample dd{padding-top:6px}
+}
+.sample-note{
+  margin:18px 0 0;font-size:13px;color:var(--ink-3);max-width:76ch;
+}
+
+/* ===========================================================
+   実績（差し替え枠）
+   =========================================================== */
+.works{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:clamp(18px,2.5vw,28px)}
+.work{border:var(--line);background:#fff}
+.work .thumb{
+  aspect-ratio:16/10;background:var(--paper-2);
+  border-bottom:var(--line);
+  display:grid;place-items:center;
+  position:relative;overflow:hidden;
+}
+.work .thumb::before{
+  content:"";position:absolute;inset:0;
+  background-image:linear-gradient(var(--rule) 1px,transparent 1px),linear-gradient(90deg,var(--rule) 1px,transparent 1px);
+  background-size:16px 16px;opacity:.5;
+}
+.work .thumb span{
+  position:relative;font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--ink-3);
+  background:var(--paper-2);padding:6px 12px;border:1px dashed var(--rule);
+}
+.work .meta{padding:18px 20px}
+.work h3{font-family:var(--serif);font-size:16px;margin:0 0 6px;font-weight:600}
+.work p{margin:0;font-size:13px;color:var(--ink-2);max-width:40ch}
+.work .tags{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px}
+.work .tags i{
+  font-style:normal;font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+  border:var(--line);padding:3px 8px;color:var(--ink-3);
+}
+.work .thumb img{width:100%;height:100%;object-fit:cover;position:relative}
+
+/* 主役の1本：制作サンプル -------------------------------- */
+.feature{border:1px solid var(--ink);background:#fff;margin-bottom:clamp(28px,4vw,44px)}
+.feature .cover{border-bottom:1px solid var(--ink);background:var(--paper-2)}
+.feature .cover img{width:100%;display:block}
+.feature .body{padding:clamp(22px,3vw,32px)}
+.feature h3{font-family:var(--serif);font-size:clamp(19px,2.4vw,23px);margin:0 0 10px;font-weight:600}
+.feature .kicker{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--vermilion);display:block;margin-bottom:12px}
+.feature p{margin:0 0 18px;font-size:14.5px;color:var(--ink-2);max-width:76ch}
+.feature .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--rule);border:var(--line);margin-bottom:20px}
+.feature .facts div{background:#fff;padding:14px 16px}
+.feature .facts .k{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--ink-3);display:block;margin-bottom:4px}
+.feature .facts .v{font-size:14px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:20px}
+.gallery figure{margin:0;border:var(--line)}
+.gallery img{width:100%;display:block}
+.gallery figcaption{font-size:11.5px;color:var(--ink-3);padding:8px 10px;border-top:var(--line);background:var(--paper-2)}
+.feature .actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.feature .disclaim{font-size:12.5px;color:var(--ink-3);margin:16px 0 0;max-width:80ch}
+
+/* ===========================================================
+   料金
+   =========================================================== */
+.price-group{margin-bottom:clamp(36px,5vw,56px)}
+.price-group > h3{
+  font-family:var(--serif);font-size:19px;font-weight:600;margin:0 0 4px;
+  display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
+}
+.price-group > h3 b{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--vermilion);font-weight:400}
+.price-group > p{margin:0 0 20px;font-size:14px;color:var(--ink-2);max-width:72ch}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1px;background:var(--rule);border:var(--line)}
+.plan{background:var(--paper);padding:24px 22px;position:relative}
+.plan.rec{background:#fff}
+.plan.rec::after{
+  content:"推奨";position:absolute;top:0;right:0;
+  background:var(--vermilion);color:#fff;font-size:10px;letter-spacing:.14em;
+  padding:3px 10px;font-family:var(--mono);
+}
+.plan .name{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--ink-3);display:block}
+.plan .fee{font-family:var(--serif);font-size:29px;margin:8px 0 2px;line-height:1.2}
+.plan .fee small{font-size:13px;font-family:var(--sans);color:var(--ink-2)}
+.plan .due{font-size:12px;color:var(--ink-3);font-family:var(--mono);letter-spacing:.06em}
+.plan ul{margin:16px 0 0;padding:0;list-style:none;font-size:13px;color:var(--ink-2)}
+.plan li{padding-left:15px;position:relative;line-height:1.8}
+.plan li::before{content:"";position:absolute;left:0;top:.82em;width:6px;height:1px;background:var(--ink-3)}
+.price-note{font-size:13px;color:var(--ink-3);margin-top:8px;max-width:76ch}
+
+/* ===========================================================
+   進め方
+   =========================================================== */
+.flow{counter-reset:st;border-top:var(--line)}
+.flow li{
+  list-style:none;counter-increment:st;
+  display:grid;grid-template-columns:88px 1fr;gap:clamp(16px,3vw,36px);
+  padding:26px 0;border-bottom:var(--line);
+}
+.flow li::before{
+  content:"STEP " counter(st);
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--vermilion);
+  padding-top:5px;
+}
+.flow h3{font-family:var(--serif);font-size:18px;margin:0 0 6px;font-weight:600}
+.flow p{margin:0;font-size:14px;color:var(--ink-2);max-width:70ch}
+@media (max-width:600px){.flow li{grid-template-columns:1fr;gap:6px}}
+
+/* ===========================================================
+   経歴
+   =========================================================== */
+.career{border-left:1px solid var(--rule);padding-left:clamp(20px,3vw,34px);margin-left:6px}
+.career > li{list-style:none;position:relative;padding-bottom:36px}
+.career > li::before{
+  content:"";position:absolute;left:calc(-1 * clamp(20px,3vw,34px) - 4px);top:10px;
+  width:7px;height:7px;background:var(--paper);border:1px solid var(--ink);border-radius:50%;
+}
+.career .term{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;color:var(--vermilion)}
+.career h3{font-family:var(--serif);font-size:18px;margin:4px 0 8px;font-weight:600}
+.career p{margin:0;font-size:14px;color:var(--ink-2);max-width:72ch}
+.career .bridge{
+  margin-top:10px;font-size:13px;color:var(--ink-2);
+  border-left:2px solid var(--vermilion-soft);padding-left:12px;max-width:70ch;
+}
+.stack{display:flex;flex-wrap:wrap;gap:7px;margin-top:clamp(20px,3vw,32px)}
+.stack i{
+  font-style:normal;font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+  border:var(--line);background:#fff;padding:5px 11px;color:var(--ink-2);
+}
+
+/* ===========================================================
+   FAQ
+   =========================================================== */
+.faq{border-top:var(--line)}
+.faq details{border-bottom:var(--line)}
+.faq summary{
+  cursor:pointer;list-style:none;padding:20px 40px 20px 30px;position:relative;
+  font-size:15px;font-family:var(--serif);
+}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::before{
+  content:"Q";position:absolute;left:0;top:20px;
+  font-family:var(--mono);font-size:12px;color:var(--vermilion);
+}
+.faq summary::after{
+  content:"";position:absolute;right:8px;top:29px;
+  width:9px;height:9px;border-right:1px solid var(--ink-3);border-bottom:1px solid var(--ink-3);
+  transform:rotate(45deg);transition:transform .25s;
+}
+.faq details[open] summary::after{transform:rotate(-135deg)}
+.faq .a{padding:0 40px 22px 30px;margin:0;font-size:14px;color:var(--ink-2);max-width:76ch;position:relative}
+.faq .a::before{content:"A";position:absolute;left:0;top:0;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+
+/* ===========================================================
+   コンタクト / フッター
+   =========================================================== */
+.contact{background:var(--ink);color:var(--paper);margin-top:clamp(48px,7vw,96px);position:relative;z-index:1}
+.contact .sec-num{color:#E4917E}
+.contact .sec-title{color:var(--paper)}
+.contact .sec-lead{color:#BFC7D6}
+.contact .dim::before,.contact .dim span{background:#7A87A0}
+.contact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;background:#2A3853;border:1px solid #2A3853}
+.contact-grid a,.contact-grid div{
+  background:var(--ink);padding:26px 24px;text-decoration:none;display:block;
+  transition:background .2s;
+}
+.contact-grid a:hover{background:#1E2E4E}
+.contact-grid .k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:#8794AC;display:block;margin-bottom:8px}
+.contact-grid .v{display:block;font-family:var(--serif);font-size:17px;line-height:1.5;color:var(--paper);overflow-wrap:anywhere}
+.contact-grid .s{display:block;font-size:12.5px;line-height:1.7;color:#A9B4C7;margin-top:8px}
+.site-foot{background:var(--ink);color:#8794AC;font-size:12px;padding-bottom:40px}
+.site-foot .wrap{border-top:1px solid #2A3853;padding-top:24px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+/* 未記入マーカー（公開前に削除） --------------------------- */
+.todo{
+  background:#FFF3A8;color:#5A4A00;padding:0 4px;
+  border-bottom:1px dashed #B79A00;font-style:normal;
+}
+</style>
+</head>
+<body>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="#top">河村<small>QA / DOCS / WEB / AUTOMATION</small></a>
+    <nav class="nav">
+      <a href="#service">対応領域</a>
+      <a href="#sample">仕事の見本</a>
+      <a href="#works">実績</a>
+      <a href="#price">料金</a>
+      <a href="#flow">進め方</a>
+      <a href="#contact">ご相談</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ========================= FV ========================= -->
+<section class="fv" id="top">
+  <div class="wrap">
+    <p class="fv-tag">FREELANCE — SOFTWARE QA / TECHNICAL DOCUMENTATION / WEB</p>
+    <h1>「動きません」で終わらせない。<br><em>そのまま直せる</em>形で報告します。</h1>
+    <p>
+      SaaS（学習管理システム・会計システム）の開発現場で、品質保証・LP制作・機能説明資料の作成・社内業務の自動化を担当しています。
+      要件の整理から納品物の形に落とすところまで、一人で一貫して対応します。
+    </p>
+    <div class="fv-cta">
+      <a class="btn" href="#contact">相談する（無料）</a>
+      <a class="btn ghost" href="#sample">納品物の見本を見る</a>
+    </div>
+
+    <div class="spec-card">
+      <div class="row">
+        <div class="cell">
+          <span class="k">TEST CASES</span>
+          <span class="v">200–300<small>ケース／件</small></span>
+        </div>
+        <div class="cell">
+          <span class="k">DOCUMENT</span>
+          <span class="v">40<small>枚超の資料に対応</small></span>
+        </div>
+        <div class="cell">
+          <span class="k">RESPONSIVE</span>
+          <span class="v">3<small>幅で実機確認</small></span>
+        </div>
+        <div class="cell">
+          <span class="k">FIELDS</span>
+          <span class="v">5<small>分野を一人で対応</small></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= 対応領域 ========================= -->
+<section id="service">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">01 — SERVICE</span>
+      <h2 class="sec-title">対応できる業務</h2>
+      <div class="dim"><span></span><span></span></div>
+      <p class="sec-lead">
+        テスト・資料・Web・自動化を横断して受けられるため、「検証して、そのまま手順書に落とす」「資料用のスクリーンショットを自動で撮る」といった、
+        職種をまたぐ依頼をまとめてお引き受けできます。
+      </p>
+    </div>
+
+    <div class="svc">
+      <article class="rise">
+        <span class="en">01 / QA</span>
+        <h3>動作検証・不具合レポート</h3>
+        <p>リリース前の第三者チェックを代行します。開発担当がそのまま修正に着手できる粒度で報告します。</p>
+        <ul>
+          <li>再現手順・期待値・実際の挙動・環境をセットで記載</li>
+          <li>ロール（権限）別の表示・操作制御の検証</li>
+          <li>ソース共有時は原因箇所をファイル・関数名まで特定</li>
+          <li>GitHub Issue での起票にも対応</li>
+        </ul>
+      </article>
+
+      <article class="rise">
+        <span class="en">02 / TEST DESIGN</span>
+        <h3>テスト設計書の作成</h3>
+        <p>担当者が変わっても同じ手順で実施できる粒度の試験書を作成します。実際に自分で回して初めてわかる曖昧さを避けた書き方で。</p>
+        <ul>
+          <li>正常系／異常系／境界値／権限を体系的に整理</li>
+          <li>前提条件・操作手順・期待結果・確認箇所を1ケースずつ</li>
+          <li>合否を記録できる列、優先度の付与</li>
+          <li>設計だけ・実施まで、どちらも対応</li>
+        </ul>
+      </article>
+
+      <article class="rise">
+        <span class="en">03 / DOCUMENT</span>
+        <h3>操作マニュアル・機能説明資料</h3>
+        <p>実際の管理画面キャプチャつきで、社内配布・顧客提出にそのまま使える資料を作成します。</p>
+        <ul>
+          <li>PowerPoint／Word／PDF で納品（編集可能な元データも）</li>
+          <li>目次・章立ての設計から対応</li>
+          <li>権限別に章を分ける構成にも対応</li>
+          <li>キャプチャの自動撮影ツールを自作、画面数が多くても短納期</li>
+        </ul>
+      </article>
+
+      <article class="rise">
+        <span class="en">04 / WEB</span>
+        <h3>LP・Webページ制作</h3>
+        <p>HTML／CSS でのコーディング。配色設計、スクロール連動アニメーション、図版の作成まで含めて対応します。</p>
+        <ul>
+          <li>PC／タブレット／スマートフォンの3幅で実機表示を確認</li>
+          <li>配色・タイポグラフィの設計から</li>
+          <li>図版・アイコンの作成（外部素材に依存しない構成）</li>
+          <li>既存ページの改修・文言差し替えにも対応</li>
+        </ul>
+      </article>
+
+      <article class="rise">
+        <span class="en">05 / AUTOMATION</span>
+        <h3>業務自動化・スクリプト開発</h3>
+        <p>繰り返し発生している手作業を、次回からご自身で回せる形にしてお渡しします。</p>
+        <ul>
+          <li>Google Apps Script（チャット投稿→スプレッドシート自動集計 など）</li>
+          <li>Node.js／Python でのファイル生成・変換・集計</li>
+          <li>Playwright によるブラウザ操作・画面キャプチャの自動化</li>
+          <li>手順書つきで納品。改修方法もあわせてご説明します</li>
+        </ul>
+      </article>
+
+      <article class="rise">
+        <span class="en">06 / OTHER</span>
+        <h3>上記にまたがるご依頼</h3>
+        <p>「検証してから手順書にする」「資料用の画面を撮る仕組みごと作る」など、職種をまたぐ依頼こそお任せください。</p>
+        <ul>
+          <li>検証 → 不具合レポート → 修正後の再検証まで一括</li>
+          <li>マニュアル作成と、掲載する画面の撮影を同時に</li>
+          <li>対応可否の判断だけのご相談も歓迎します</li>
+          <li>受けられない量のご依頼は、正直にお伝えします</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= 仕事の見本 ========================= -->
+<section id="sample">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">02 — SAMPLE</span>
+      <h2 class="sec-title">納品する不具合レポートの形</h2>
+      <div class="dim"><span></span><span></span></div>
+      <p class="sec-lead">
+        実際にお出しするレポートの1件分です（内容はサンプル用に作成した架空のものです）。
+        1件ごとに、再現手順・期待値・実際の挙動・環境・原因箇所を記載するため、受け取った側は調査から始めずに修正へ入れます。
+      </p>
+    </div>
+
+    <div class="sample rise">
+      <div class="sample-bar">
+        <strong>ID-014　招待済みユーザーの権限が、再招待で「閲覧者」に戻る</strong>
+        <span>2026-08-11</span>
+        <span class="sev">影響度：高</span>
+      </div>
+      <dl>
+        <dt>再現手順</dt>
+        <dd>
+          <ol>
+            <li>管理者でログインし、[メンバー管理] を開く</li>
+            <li>任意のメンバーの権限を「閲覧者」→「編集者」に変更し、保存する</li>
+            <li>同じメンバーのメールアドレス宛に、再度 [招待を送信] を押す</li>
+            <li>[メンバー管理] を再読み込みし、当該メンバーの権限列を確認する</li>
+          </ol>
+        </dd>
+
+        <dt>期待する動作</dt>
+        <dd>再招待は招待メールの再送のみを行い、設定済みの権限「編集者」は保持される。</dd>
+
+        <dt>実際の動作</dt>
+        <dd>権限が初期値の <span class="bad">「閲覧者」に上書きされる</span>。画面上に警告は表示されず、操作者は変更に気づけない。</dd>
+
+        <dt>発生環境</dt>
+        <dd>macOS 15.5 ／ Chrome 139 ／ 画面幅 1440px・390px の両方で再現（100%）</dd>
+
+        <dt>原因と思われる箇所<br><small style="font-family:var(--sans);font-size:11px;color:var(--ink-3)">※ソース共有時のみ</small></dt>
+        <dd>
+          <code>src/server/members/invite.ts</code> の <code>sendInvite()</code> が、既存レコードの有無を判定せず
+          <code>upsert()</code> に <code>role: 'viewer'</code> を毎回渡しているため。既存ユーザーの場合は role をペイロードから除外する必要があります。
+        </dd>
+
+        <dt>補足</dt>
+        <dd>同じ実装パターンが [組織の招待] 画面（<code>orgs/invite.ts</code>）にもあり、そちらでも同様の事象を確認しました。あわせてご確認ください。</dd>
+      </dl>
+    </div>
+    <p class="sample-note">
+      ※ 現職での成果物は守秘義務の対象となるため掲載しておりません。本見本は、実際の納品フォーマットに沿って作成した架空の事例です。
+      ご依頼時は Excel／Google スプレッドシートなど、ご指定の形式で納品します。
+    </p>
+  </div>
+</section>
+
+<!-- ========================= 実績 ========================= -->
+<section id="works">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">03 — WORKS</span>
+      <h2 class="sec-title">実績</h2>
+      <div class="dim"><span></span><span></span></div>
+      <p class="sec-lead">
+        現職での成果物は守秘義務の対象となるため掲載しておりません。実際の制作手順と同じ工程で、
+        架空のサービスを題材に新規制作したサンプルを掲載しています。
+      </p>
+    </div>
+
+    <!-- ▼ 主役：営業資料の制作サンプル -->
+    <article class="feature rise">
+      <div class="cover"><img src="works/rotaria-01.png" alt="Rotaria サービス紹介資料 表紙"></div>
+      <div class="body">
+        <span class="kicker">SALES DECK — 制作サンプル</span>
+        <h3>架空のBtoB SaaS「Rotaria」サービス紹介資料（全15ページ）</h3>
+        <p>
+          多店舗チェーン向けシフト管理サービスという設定で、営業・商談で使う紹介資料を1本通して設計しました。
+          原稿を並べるのではなく、1ページ＝1メッセージに絞り、伝えたい内容を図解・表・グラフに変換しています。
+          配色は2色＋グレーに固定し、見出し・余白・罫線の規則を15ページ全体で統一しました。
+        </p>
+        <div class="facts">
+          <div><span class="k">PAGES</span><span class="v">15ページ</span></div>
+          <div><span class="k">FORMAT</span><span class="v">PowerPoint ／ PDF</span></div>
+          <div><span class="k">STRUCTURE</span><span class="v">課題 → 解決 → 効果 → 料金</span></div>
+          <div><span class="k">IMAGE</span><span class="v">図版はすべて作図（素材の使用なし）</span></div>
+        </div>
+
+        <div class="gallery">
+          <figure><img src="works/rotaria-03.png" alt="課題提起のページ"><figcaption>課題を3つに整理し、各々に数値を添える</figcaption></figure>
+          <figure><img src="works/rotaria-08.png" alt="機能説明のページ"><figcaption>機能はUIを模した図で示す</figcaption></figure>
+          <figure><img src="works/rotaria-11.png" alt="導入効果のページ"><figcaption>効果は数値を主役に3点で</figcaption></figure>
+          <figure><img src="works/rotaria-13.png" alt="料金プランのページ"><figcaption>料金は推奨プランを1つ立てる</figcaption></figure>
+        </div>
+
+        <div class="actions">
+          <a class="btn" href="works/Rotaria_サービス紹介資料_サンプル.pdf" target="_blank" rel="noopener">全15ページをPDFで見る</a>
+          <a class="btn ghost" href="#contact">同じ形式で作成を依頼する</a>
+        </div>
+
+        <p class="disclaim">
+          ※ Rotaria は実在しないサービスです。守秘義務のある業務の成果物は掲載できないため、
+          実際の制作フローと同じ手順で、架空のサービスを題材に新規制作したものです。掲載の数値・事例はすべて架空です。
+        </p>
+      </div>
+    </article>
+
+    <!-- ▼ 差し替え枠：画像は works/ に置き、<span>…</span> を <img src="works/xxx.png" alt=""> に置き換えてください -->
+    <div class="works">
+      <article class="work rise">
+        <div class="thumb"><span>IMAGE 01</span></div>
+        <div class="meta">
+          <h3><span class="todo">案件名を記入</span></h3>
+          <p><span class="todo">依頼内容と、担当した範囲・成果を2行程度で記入</span></p>
+          <div class="tags"><i>QA</i><i>TEST DESIGN</i></div>
+        </div>
+      </article>
+
+      <article class="work rise">
+        <div class="thumb"><span>IMAGE 02</span></div>
+        <div class="meta">
+          <h3><span class="todo">案件名を記入</span></h3>
+          <p><span class="todo">依頼内容と、担当した範囲・成果を2行程度で記入</span></p>
+          <div class="tags"><i>DOCUMENT</i><i>MANUAL</i></div>
+        </div>
+      </article>
+
+      <article class="work rise">
+        <div class="thumb"><span>IMAGE 03</span></div>
+        <div class="meta">
+          <h3><span class="todo">案件名を記入</span></h3>
+          <p><span class="todo">依頼内容と、担当した範囲・成果を2行程度で記入</span></p>
+          <div class="tags"><i>WEB</i><i>HTML / CSS</i></div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= 料金 ========================= -->
+<section id="price">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">04 — PRICE</span>
+      <h2 class="sec-title">料金の目安</h2>
+      <div class="dim"><span></span><span></span></div>
+      <p class="sec-lead">
+        規模によって変動するため、あくまで目安です。まずは対象のURLや資料をお見せいただければ、規模を確認して適したプランをご案内します。
+      </p>
+    </div>
+
+    <div class="price-group rise">
+      <h3>動作検証・不具合レポート作成 <b>PLAN A</b></h3>
+      <p>リリース前の動作チェックを代行し、再現手順つきのレポートを納品します。</p>
+      <div class="plans">
+        <div class="plan">
+          <span class="name">BASIC</span>
+          <div class="fee">15,000<small>円</small></div>
+          <div class="due">納期 4日</div>
+          <ul>
+            <li>1〜3画面（1機能）を検証</li>
+            <li>PC（Chrome）のみ</li>
+            <li>不具合レポート（Excel／スプレッドシート）</li>
+          </ul>
+        </div>
+        <div class="plan rec">
+          <span class="name">STANDARD</span>
+          <div class="fee">30,000<small>円</small></div>
+          <div class="due">納期 6日</div>
+          <ul>
+            <li>4〜10画面（3機能程度）を検証</li>
+            <li>PC＋スマートフォン表示</li>
+            <li>レポート＋スクリーンショット</li>
+            <li>修正後の再確認 1回</li>
+          </ul>
+        </div>
+        <div class="plan">
+          <span class="name">PREMIUM</span>
+          <div class="fee">60,000<small>円</small></div>
+          <div class="due">納期 10日</div>
+          <ul>
+            <li>11画面以上、または権限別の検証</li>
+            <li>PC／タブレット／スマホの3環境</li>
+            <li>レポート＋スクショ＋影響度の整理</li>
+            <li>再確認2回／観点チェックリスト付</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="price-group rise">
+      <h3>テスト設計書（テストケース）の作成 <b>PLAN B</b></h3>
+      <p>そのまま実施できる粒度の試験書を作成します。実施までのご依頼にも対応します。</p>
+      <div class="plans">
+        <div class="plan">
+          <span class="name">BASIC</span>
+          <div class="fee">25,000<small>円</small></div>
+          <div class="due">納期 5日</div>
+          <ul>
+            <li>50ケース程度／1機能（3〜5画面）</li>
+            <li>Excel／スプレッドシート形式で納品</li>
+          </ul>
+        </div>
+        <div class="plan rec">
+          <span class="name">STANDARD</span>
+          <div class="fee">50,000<small>円</small></div>
+          <div class="due">納期 8日</div>
+          <ul>
+            <li>120ケース程度／複数機能・権限別</li>
+            <li>テスト観点の一覧つき</li>
+            <li>合否を記録できる列を用意</li>
+          </ul>
+        </div>
+        <div class="plan">
+          <span class="name">PREMIUM</span>
+          <div class="fee">100,000<small>円</small></div>
+          <div class="due">納期 14日</div>
+          <ul>
+            <li>250ケース程度／システム全体</li>
+            <li>正常系／異常系／境界値／権限を整理</li>
+            <li>ケースごとに優先度を付与</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="price-group rise">
+      <h3>操作マニュアル・機能説明資料の作成 <b>PLAN C</b></h3>
+      <p>実際の画面キャプチャつきで、社内配布・顧客提出にそのまま使える資料を作成します。</p>
+      <div class="plans">
+        <div class="plan">
+          <span class="name">BASIC</span>
+          <div class="fee">20,000<small>円</small></div>
+          <div class="due">納期 5日</div>
+          <ul>
+            <li>10ページ程度</li>
+            <li>画面キャプチャ 10点まで</li>
+            <li>Word（または PowerPoint）＋PDF</li>
+          </ul>
+        </div>
+        <div class="plan rec">
+          <span class="name">STANDARD</span>
+          <div class="fee">45,000<small>円</small></div>
+          <div class="due">納期 8日</div>
+          <ul>
+            <li>25ページ程度</li>
+            <li>キャプチャ30点（囲み・矢印つき）</li>
+            <li>目次・章立ての設計込み</li>
+          </ul>
+        </div>
+        <div class="plan">
+          <span class="name">PREMIUM</span>
+          <div class="fee">90,000<small>円</small></div>
+          <div class="due">納期 14日</div>
+          <ul>
+            <li>50ページ程度／キャプチャ60点</li>
+            <li>権限別に章を分けて作成</li>
+            <li>つまずきやすい箇所の補足つき</li>
+            <li>編集可能な元データもお渡し</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <p class="price-note">
+      ※ LP制作・業務自動化については、内容によって幅が大きいため個別にお見積りします。<br>
+      ※ 表示は税込・すべて目安です。継続してご依頼いただく場合は別途ご相談ください。
+    </p>
+  </div>
+</section>
+
+<!-- ========================= 進め方 ========================= -->
+<section id="flow">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">05 — FLOW</span>
+      <h2 class="sec-title">進め方</h2>
+      <div class="dim"><span></span><span></span></div>
+      <p class="sec-lead">
+        着手前に成果物の形（枚数・構成・仕様）をすり合わせ、手戻りを防ぎます。判断が必要な場面では、選択肢と推奨案をセットでお出しします。
+      </p>
+    </div>
+
+    <ol class="flow">
+      <li class="rise">
+        <div>
+          <h3>ご相談・ヒアリング</h3>
+          <p>対象のURL・資料をお見せください。規模と対応可否を確認し、適したプランと納期をご案内します。ご相談だけでも歓迎です。</p>
+        </div>
+      </li>
+      <li class="rise">
+        <div>
+          <h3>成果物の形をすり合わせ</h3>
+          <p>納品物のフォーマット・粒度・確認範囲を着手前に文章で確定します。ここを固めておくと、完成後の「思っていたものと違う」を防げます。</p>
+        </div>
+      </li>
+      <li class="rise">
+        <div>
+          <h3>作業・中間報告</h3>
+          <p>作業の途中で一度、途中経過をお見せします。方向が違っていた場合はこの時点で修正します。判断が要る箇所は選択肢を添えてご質問します。</p>
+        </div>
+      </li>
+      <li class="rise">
+        <div>
+          <h3>納品・修正対応</h3>
+          <p>納品後の修正はプランに含まれる回数まで対応します。自動化ツールの場合は、次回からご自身で回せるよう手順書を添えてお渡しします。</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ========================= 経歴 ========================= -->
+<section id="about">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">06 — ABOUT</span>
+      <h2 class="sec-title">経歴</h2>
+      <div class="dim"><span></span><span></span></div>
+      <p class="sec-lead">
+        製造現場の外観検査からキャリアを始め、SaaSの品質保証へ。「規格から外れたものを見つけて止める」という考え方は、そのままソフトウェアテストに通じています。
+      </p>
+    </div>
+
+    <ul class="career">
+      <li class="rise">
+        <span class="term">2024.02 — 現在</span>
+        <h3>SaaS開発企業（社名非公開）／エンジニア</h3>
+        <p>
+          学習管理システム（LMS）・会計システムの開発・提供。品質保証（テスト設計200〜300ケース規模、ロール別検証、API検証、Issue起票）、
+          サービス紹介LPの制作、機能説明資料・操作マニュアルの作成、社内業務の自動化を担当。
+          管理画面のスクリーンショットを自動撮影して資料へ差し込む仕組みを自作し、画面数の多い資料の作成工数を削減しました。
+        </p>
+      </li>
+      <li class="rise">
+        <span class="term">2021.11 — 2024.01</span>
+        <h3>フリーランス／Webライター</h3>
+        <p>
+          BtoB SaaS・IT分野の記事を執筆（RPAツール、業務効率化ツール、金融サービスなど）。構成案の作成から執筆・修正対応まで担当し、
+          複数クライアントと並行して取引・納期管理。
+        </p>
+        <p class="bridge">
+          SaaSを「専門知識のない読み手に伝わる形で説明する」経験が、現在の機能説明資料・操作マニュアル・LP制作に直結しています。
+        </p>
+      </li>
+      <li class="rise">
+        <span class="term">2014.04 — 2021.10</span>
+        <h3>自動車部品製造業／製造オペレーター</h3>
+        <p>
+          自動車用バンパーの製造ラインを担当。製品の外観検査、規定に沿った手順での作業品質の維持、部品・製品の運搬と資材管理。
+        </p>
+        <p class="bridge">
+          決められた手順を守り、規格から外れた製品を見つけて止める。製造現場での検査の考え方が、現在のソフトウェアテストの基礎になっています。
+        </p>
+      </li>
+    </ul>
+
+    <div class="stack">
+      <i>JavaScript</i><i>TypeScript</i><i>Node.js</i><i>Python</i><i>HTML</i><i>CSS</i>
+      <i>Playwright</i><i>Google Apps Script</i><i>Git / GitHub</i><i>PostgreSQL</i>
+      <i>PowerPoint / Word / Excel</i><i>生成AI（Claude・Gemini）の実務活用</i>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= FAQ ========================= -->
+<section id="faq">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">07 — FAQ</span>
+      <h2 class="sec-title">よくあるご質問</h2>
+      <div class="dim"><span></span><span></span></div>
+    </div>
+
+    <div class="faq">
+      <details>
+        <summary>仕様書がありませんが、依頼できますか？</summary>
+        <p class="a">可能です。画面を触りながら想定される挙動を確認し、判断が必要な箇所はご質問させていただく形で進めます。仕様書やソースコードをご共有いただけると「実装が意図どおりか」まで踏み込めるため、見つかる不具合の数と報告の精度が上がります。</p>
+      </details>
+      <details>
+        <summary>ソースコードを渡す必要がありますか？</summary>
+        <p class="a">必須ではありません。URLとテスト用アカウントだけでも検証できます。コードをご共有いただける場合は、原因と思われる箇所まで報告に含められる、という違いがあります。秘密保持契約（NDA）の締結にも対応しますので、社内規定に沿ってご判断ください。</p>
+      </details>
+      <details>
+        <summary>開発中の環境でも検証できますか？</summary>
+        <p class="a">対応できます。ステージング環境・検証環境をご指定ください。</p>
+      </details>
+      <details>
+        <summary>検証範囲が事前にわかりません。</summary>
+        <p class="a">まずURLをお見せいただければ、規模を確認して適したプランをご案内します。ご依頼前のご相談も歓迎です。</p>
+      </details>
+      <details>
+        <summary>お預かりした資料の扱いはどうなりますか？</summary>
+        <p class="a">秘密保持契約（NDA）の締結に対応します。ご共有いただいた資料・アカウントは納品後に削除し、他の目的には一切使用しません。実績としての掲載も、許可をいただいた場合のみ行います。</p>
+      </details>
+      <details>
+        <summary>対応できないことはありますか？</summary>
+        <p class="a">脆弱性診断・ペネトレーションテスト（セキュリティ専門の診断）、ネイティブアプリ（iOS／Android）の実機検証、ゲームのテストプレイは対象外です。また、不具合の「修正」は承っておらず、検証と報告までを担当します。受けられない量のご依頼は、正直にその旨をお伝えします。</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= コンタクト ========================= -->
+<section class="contact" id="contact">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-num">08 — CONTACT</span>
+      <h2 class="sec-title">ご相談ください</h2>
+      <div class="dim"><span></span><span></span></div>
+      <p class="sec-lead">
+        「これは対応できますか？」というご確認だけでも歓迎です。ご要望を伺い、対応可否と進め方をご提案します。
+      </p>
+    </div>
+
+    <div class="contact-grid">
+      <a href="https://www.lancers.jp/profile/mmtrk0606?ref=header_menu" target="_blank" rel="noopener">
+        <span class="k">LANCERS</span>
+        <span class="v">ランサーズから依頼する</span>
+        <span class="s">パッケージ一覧・購入はこちら</span>
+      </a>
+      <a href="mailto:karenlove06061@gmail.com">
+        <span class="k">E-MAIL</span>
+        <span class="v">karenlove06061@gmail.com</span>
+        <span class="s">2営業日以内にご返信します</span>
+      </a>
+      <div>
+        <span class="k">AVAILABILITY</span>
+        <span class="v">週 10 時間</span>
+        <span class="s">15ページ規模の資料で月2〜3件／環境：Mac</span>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-foot">
+    <div class="wrap">
+      <span>© 2026 河村</span>
+      <span>掲載中の見本は、守秘義務に配慮して作成した架空の事例です。</span>
+    </div>
+  </footer>
+</section>
+
+<script>
+// セクション入場（FVは対象外＝常時表示）
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  });
+}, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+
+document.querySelectorAll('section:not(.fv), .rise').forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>
