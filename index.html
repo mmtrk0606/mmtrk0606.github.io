@@ -110,6 +110,7 @@ section{padding-block:clamp(64px,9vw,120px)}
   .rise{opacity:1;transform:none;transition:none}
   .dim::before{width:min(220px,42vw);transition:none}
   .dim span{opacity:1;transition:none}
+  .fv-fig .flow{animation:none}
 }
 
 /* ===========================================================
@@ -134,6 +135,7 @@ section{padding-block:clamp(64px,9vw,120px)}
    FV
    =========================================================== */
 .fv{padding-block:clamp(56px,10vw,112px) clamp(48px,7vw,88px)}
+.fv .wrap{container-type:inline-size}
 .fv-tag{
   font-family:var(--mono); font-size:11px; letter-spacing:.2em;
   color:var(--ink-3); margin:0 0 22px;
@@ -152,7 +154,24 @@ section{padding-block:clamp(64px,9vw,120px)}
   content:""; position:absolute; left:0; right:0; bottom:.08em; height:.42em;
   background:var(--vermilion-soft); z-index:-1;
 }
-.fv p{max-width:70ch;margin:28px 0 0;color:var(--ink-2)}
+/* 狭い画面でも見出しを2行に保つ。
+   長い方の行（2行目）の実測幅が 14.76em なので、
+   段組の内寸をその値＋安全代で割った値を字送りの上限にする。 */
+@media (max-width:520px){
+  .fv h1{
+    font-size:clamp(17px,5.8vw,31px);  /* cqi 非対応ブラウザ向け */
+    font-size:calc(100cqi / 15.1);
+  }
+}
+.fv-body{
+  display:grid; grid-template-columns:minmax(0,1fr);
+  gap:clamp(30px,4.5vw,54px); align-items:start;
+  margin-top:clamp(24px,3vw,34px);
+}
+@media (min-width:900px){
+  .fv-body{grid-template-columns:minmax(0,1fr) minmax(0,.9fr)}
+}
+.fv-copy p{max-width:64ch;margin:0;color:var(--ink-2)}
 .fv-cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:38px}
 .btn{
   display:inline-block; text-decoration:none;
@@ -163,6 +182,44 @@ section{padding-block:clamp(64px,9vw,120px)}
 .btn:hover{background:var(--vermilion);border-color:var(--vermilion);transform:translateY(-1px)}
 .btn.ghost{background:transparent;color:var(--ink)}
 .btn.ghost:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+
+/* FVの図版：対応範囲の見取り図 ---------------------------- */
+.fv-fig{
+  margin:0;
+  border:1px solid var(--ink);
+  background:#fff;
+  box-shadow:8px 8px 0 var(--rule-2);
+}
+.fv-fig svg{display:block;width:100%;height:auto}
+.fv-fig .grid{fill:none;stroke:var(--rule-2);stroke-width:1}
+.fv-fig .room{fill:#fff;stroke:var(--rule);stroke-width:1}
+.fv-fig .plate{fill:none;stroke:var(--ink);stroke-width:1}
+.fv-fig .dim{stroke:var(--ink-3);stroke-width:1;fill:none}
+.fv-fig .plaque{fill:#fff}
+.fv-fig .num{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;fill:var(--vermilion)}
+.fv-fig .jp{font-family:var(--serif);font-size:14px;fill:var(--ink)}
+.fv-fig .cap{font-size:10px;letter-spacing:.06em;fill:var(--ink-3)}
+.fv-fig .flow{
+  fill:none;stroke:var(--vermilion);stroke-width:1.5;
+  stroke-dasharray:6 5;animation:ants 4.5s linear infinite;
+}
+.fv-fig .node{fill:#fff;stroke:var(--vermilion);stroke-width:1.5}
+@keyframes ants{to{stroke-dashoffset:-22}}
+.fv-fig figcaption{
+  border-top:1px solid var(--ink);
+  display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;
+  padding:11px 15px;
+}
+.fv-fig .t{font-family:var(--serif);font-size:13.5px;letter-spacing:.04em}
+.fv-fig .d{font-size:11.5px;color:var(--ink-3);line-height:1.7}
+.fv-fig .n{margin-left:auto;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--ink-3)}
+@media (max-width:560px){
+  /* 図版が縮む分、図中の文字だけ実寸を保つ */
+  .fv-fig .num{font-size:11.5px}
+  .fv-fig .jp{font-size:16px}
+  .fv-fig .cap{font-size:12px}
+  .fv-fig .n{margin-left:0}
+}
 
 /* FVの図面カード：検査票 */
 .spec-card{
@@ -422,13 +479,69 @@ section{padding-block:clamp(64px,9vw,120px)}
   <div class="wrap">
     <p class="fv-tag">FREELANCE — SOFTWARE QA / TECHNICAL DOCUMENTATION / WEB</p>
     <h1>「動きません」で終わらせない。<br><em>そのまま直せる</em>形で報告します。</h1>
-    <p>
-      SaaS（学習管理システム・会計システム）の開発現場で、品質保証・LP制作・機能説明資料の作成・社内業務の自動化を担当しています。
-      要件の整理から納品物の形に落とすところまで、一人で一貫して対応します。
-    </p>
-    <div class="fv-cta">
-      <a class="btn" href="#contact">相談する（無料）</a>
-      <a class="btn ghost" href="#sample">納品物の見本を見る</a>
+    <div class="fv-body">
+      <div class="fv-copy">
+        <p>
+          SaaS（学習管理システム・会計システム）の開発現場で、品質保証・LP制作・機能説明資料の作成・社内業務の自動化を担当しています。
+          要件の整理から納品物の形に落とすところまで、一人で一貫して対応します。
+        </p>
+        <div class="fv-cta">
+          <a class="btn" href="#contact">相談する（無料）</a>
+          <a class="btn ghost" href="#sample">納品物の見本を見る</a>
+        </div>
+      </div>
+
+      <figure class="fv-fig rise">
+        <svg viewBox="0 0 420 268" role="img" aria-labelledby="fvfig-t fvfig-d">
+          <title id="fvfig-t">対応範囲図</title>
+          <desc id="fvfig-d">動作検証・テスト設計・資料作成・Web制作・業務自動化の5分野を、1人で横断して担当することを示した図面。</desc>
+          <defs>
+            <pattern id="fvgrid" width="14" height="14" patternUnits="userSpaceOnUse">
+              <path class="grid" d="M14 0H0v14"/>
+            </pattern>
+          </defs>
+          <rect width="420" height="268" fill="url(#fvgrid)"/>
+
+          <!-- 寸法線 -->
+          <path class="dim" d="M40 32H400M40 26v12M400 26v12"/>
+          <rect class="plaque" x="152" y="20" width="136" height="16"/>
+          <text class="cap" x="220" y="32" text-anchor="middle">対応領域 ＝ 5分野</text>
+          <path class="dim" d="M24 52v196M18 52h12M18 248h12"/>
+          <text class="cap" x="14" y="150" text-anchor="middle" transform="rotate(-90 14 150)">相談から納品まで</text>
+
+          <!-- 区画 -->
+          <rect class="room" x="40"  y="52"  width="126" height="90"/>
+          <rect class="room" x="166" y="52"  width="126" height="90"/>
+          <rect class="room" x="292" y="52"  width="108" height="90"/>
+          <rect class="room" x="40"  y="142" width="180" height="106"/>
+          <rect class="room" x="220" y="142" width="180" height="106"/>
+          <rect class="plate" x="40" y="52" width="360" height="196"/>
+
+          <text class="num" x="52"  y="74">01 / QA</text>
+          <text class="jp"  x="52"  y="96">動作検証</text>
+          <text class="num" x="178" y="74">02 / DESIGN</text>
+          <text class="jp"  x="178" y="96">テスト設計</text>
+          <text class="num" x="304" y="74">03 / DOCS</text>
+          <text class="jp"  x="304" y="96">資料作成</text>
+          <text class="num" x="232" y="168">04 / WEB</text>
+          <text class="jp"  x="232" y="190">Web制作</text>
+          <text class="num" x="52"  y="168">05 / AUTO</text>
+          <text class="jp"  x="52"  y="190">業務自動化</text>
+
+          <!-- 横断する動線 -->
+          <path class="flow" d="M103 118H346L320 228H130"/>
+          <circle class="node" cx="103" cy="118" r="4"/>
+          <circle class="node" cx="229" cy="118" r="4"/>
+          <circle class="node" cx="346" cy="118" r="4"/>
+          <circle class="node" cx="320" cy="228" r="4"/>
+          <circle class="node" cx="130" cy="228" r="4"/>
+        </svg>
+        <figcaption>
+          <span class="t">対応範囲図</span>
+          <span class="d">朱の線は、区画をまたいで1人で担当する動線</span>
+          <span class="n">SCALE 1:1</span>
+        </figcaption>
+      </figure>
     </div>
 
     <div class="spec-card">
