@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rezerva — 会議室予約システム（検証用モック）</title>
+<style>
+  :root{
+    --brand:#2563EB; --brand-d:#1D4ED8; --brand-l:#EFF5FF;
+    --ink:#111827; --ink2:#4B5563; --ink3:#9CA3AF;
+    --line:#E5E7EB; --bg:#F7F8FA; --white:#fff;
+    --red:#DC2626; --red-bg:#FEF2F2; --amber:#D97706; --green:#059669; --green-bg:#ECFDF5;
+    --font:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:var(--font);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  .app{display:grid;grid-template-columns:216px 1fr;min-height:100vh}
+
+  /* サイドバー */
+  .side{background:#0F172A;color:#CBD5E1;padding:20px 0;display:flex;flex-direction:column}
+  .logo{padding:0 20px 22px;font-size:19px;font-weight:700;color:#fff;letter-spacing:.02em}
+  .logo span{color:#60A5FA}
+  .nav a{display:block;padding:11px 20px;color:#CBD5E1;text-decoration:none;font-size:13.5px}
+  .nav a.on{background:#1E293B;color:#fff;border-left:3px solid var(--brand);padding-left:17px;font-weight:600}
+  .nav .sec{padding:16px 20px 6px;font-size:11px;color:#64748B;letter-spacing:.08em}
+  .side .me{margin-top:auto;padding:16px 20px 0;border-top:1px solid #1E293B;font-size:12px;color:#94A3B8}
+  .side .me b{display:block;color:#fff;font-size:13px;font-weight:600}
+
+  /* ヘッダー */
+  .head{background:var(--white);border-bottom:1px solid var(--line);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between}
+  .head h1{font-size:17px;font-weight:600}
+  .head .r{display:flex;gap:10px;align-items:center}
+  .btn{border:1px solid var(--line);background:var(--white);color:var(--ink);padding:8px 16px;border-radius:6px;font-size:13px;font-family:var(--font);cursor:pointer}
+  .btn.pri{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+  .btn.dan{background:var(--red);border-color:var(--red);color:#fff}
+  .btn.sm{padding:5px 11px;font-size:12px}
+  main{padding:24px 28px 40px}
+
+  /* カード・テーブル */
+  .card{background:var(--white);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .card .ch{padding:14px 18px;border-bottom:1px solid var(--line);font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+  table{width:100%;border-collapse:collapse}
+  th{background:#F9FAFB;text-align:left;font-size:12px;color:var(--ink2);font-weight:600;padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:12px 14px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle}
+  tr:last-child td{border-bottom:0}
+  .tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:600;white-space:nowrap}
+  .tag.ok{background:var(--green-bg);color:var(--green)}
+  .tag.ng{background:var(--red-bg);color:var(--red)}
+  .tag.gr{background:#F3F4F6;color:var(--ink2)}
+  .tag.bl{background:var(--brand-l);color:var(--brand-d)}
+  .muted{color:var(--ink3)}
+
+  /* フォーム */
+  .form{display:grid;grid-template-columns:150px 1fr;gap:0}
+  .form .k{padding:16px 18px;border-bottom:1px solid var(--line);background:#F9FAFB;font-size:13px;color:var(--ink2);display:flex;align-items:center;gap:6px}
+  .form .v{padding:14px 18px;border-bottom:1px solid var(--line)}
+  .form .k .req{background:var(--red);color:#fff;font-size:10px;padding:1px 5px;border-radius:3px}
+  input[type=text],input[type=date],select,textarea{
+    border:1px solid #D1D5DB;border-radius:6px;padding:8px 11px;font-size:13.5px;font-family:var(--font);background:#fff;color:var(--ink)
+  }
+  input[type=text]{width:100%;max-width:420px}
+  textarea{width:100%;max-width:420px;height:64px;resize:none}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .hint{font-size:11.5px;color:var(--ink3);margin-top:6px}
+  .foot{padding:16px 18px;display:flex;gap:10px;justify-content:flex-end}
+
+  /* 通知 */
+  .alert{border-radius:8px;padding:13px 16px;margin-bottom:18px;font-size:13.5px;display:flex;gap:10px;align-items:flex-start}
+  .alert.err{background:var(--red-bg);border:1px solid #FECACA;color:#991B1B}
+  .alert.suc{background:var(--green-bg);border:1px solid #A7F3D0;color:#065F46}
+  .alert b{font-weight:600}
+  .alert .ic{font-weight:700}
+
+  /* 注釈（検証で問題のある箇所を示す） */
+  .mark{outline:2px solid var(--red);outline-offset:2px;border-radius:4px}
+  .callout{
+    position:absolute;background:var(--red);color:#fff;font-size:11.5px;font-weight:600;
+    padding:3px 9px;border-radius:4px;white-space:nowrap;z-index:5;
+  }
+  .rel{position:relative}
+
+  /* スマホ崩れ再現用 */
+  body.sp .app{grid-template-columns:1fr}
+  body.sp .side{display:none}
+  body.sp main{padding:16px 14px 40px}
+  body.sp .card{overflow:visible}
+  body.sp table{width:760px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="logo">Re<span>z</span>erva</div>
+    <nav class="nav" id="nav"></nav>
+    <div class="me" id="me"></div>
+  </aside>
+
+  <div>
+    <header class="head">
+      <h1 id="ttl"></h1>
+      <div class="r" id="hr"></div>
+    </header>
+    <main id="main"></main>
+  </div>
+</div>
+
+<script>
+const q = new URLSearchParams(location.search);
+const view = q.get("v") || "list";
+const role = q.get("role") || "member";
+
+const NAV = [
+  ["list", "予約一覧"],
+  ["create", "新規予約"],
+  ["mine", "自分の予約"],
+];
+const ADMIN_NAV = [["rooms", "会議室管理"], ["users", "利用者管理"]];
+
+document.getElementById("nav").innerHTML =
+  NAV.map(([k, t]) => `<a href="?v=${k}&role=${role}" class="${view === k ? "on" : ""}">${t}</a>`).join("") +
+  `<div class="sec">管理</div>` +
+  ADMIN_NAV.map(([k, t]) => `<a href="?v=${k}&role=${role}" class="${view === k ? "on" : ""}">${t}</a>`).join("");
+
+document.getElementById("me").innerHTML = role === "admin"
+  ? `<b>管理 太郎</b>管理者`
+  : `<b>検証 花子</b>一般利用者`;
+
+const V = {};
+
+/* ── 予約一覧（重複予約が並んでいる状態） ───────────────── */
+V.list = {
+  title: "予約一覧",
+  head: `<button class="btn">CSV出力</button><button class="btn pri">＋ 新規予約</button>`,
+  body: `
+  <div class="card">
+    <div class="ch">2026年8月18日（月）の予約　<span class="muted" style="font-weight:400;font-size:12.5px">全 6 件</span></div>
+    <table>
+      <thead><tr><th style="width:130px">会議室</th><th style="width:150px">時間</th><th>件名</th><th style="width:110px">予約者</th><th style="width:90px">状態</th><th style="width:120px"></th></tr></thead>
+      <tbody>
+        <tr><td>会議室A（8名）</td><td>09:00 – 10:00</td><td>朝会</td><td>検証 花子</td><td><span class="tag ok">確定</span></td><td><button class="btn sm">詳細</button></td></tr>
+        <tr class="rel" style="background:#FEF2F2"><td>会議室A（8名）</td><td><b>10:00 – 12:00</b></td><td>採用面接</td><td>山田 一郎</td><td><span class="tag ok">確定</span></td><td><button class="btn sm">詳細</button></td></tr>
+        <tr class="rel" style="background:#FEF2F2"><td>会議室A（8名）</td><td><b>11:00 – 13:00</b></td><td>定例MTG</td><td>検証 花子</td><td><span class="tag ok">確定</span></td><td><button class="btn sm">詳細</button></td></tr>
+        <tr><td>会議室B（4名）</td><td>13:00 – 14:00</td><td>1on1</td><td>佐藤 次郎</td><td><span class="tag ok">確定</span></td><td><button class="btn sm">詳細</button></td></tr>
+        <tr><td class="muted">不明な会議室</td><td>15:00 – 16:00</td><td>取引先来訪</td><td>鈴木 三郎</td><td><span class="tag ok">確定</span></td><td><button class="btn sm">詳細</button></td></tr>
+        <tr><td>会議室B（4名）</td><td>18:00 – 19:00</td><td>勉強会</td><td>検証 花子</td><td><span class="tag gr">キャンセル済</span></td><td><button class="btn sm">詳細</button></td></tr>
+      </tbody>
+    </table>
+  </div>`,
+};
+
+/* ── 予約作成（終了 < 開始 でも登録できてしまう） ─────────── */
+V.create = {
+  title: "新規予約",
+  head: ``,
+  body: `
+  <div class="alert suc"><span class="ic">✓</span><div>予約を登録しました。（予約番号：RZ-20260818-0043）</div></div>
+  <div class="card" style="max-width:760px">
+    <div class="ch">予約内容</div>
+    <div class="form">
+      <div class="k">会議室 <span class="req">必須</span></div>
+      <div class="v"><select><option>会議室A（8名）</option></select></div>
+
+      <div class="k">利用日 <span class="req">必須</span></div>
+      <div class="v"><input type="text" value="2026-08-18" style="max-width:180px"></div>
+
+      <div class="k">時間 <span class="req">必須</span></div>
+      <div class="v">
+        <div class="row">
+          <select style="width:110px"><option>16:00</option></select>
+          <span>〜</span>
+          <select style="width:110px"><option>14:00</option></select>
+        </div>
+        <div class="hint">30分単位で指定できます（営業時間 8:00〜22:00）</div>
+      </div>
+
+      <div class="k">件名 <span class="req">必須</span></div>
+      <div class="v"><input type="text" value="部門定例ミーティング"></div>
+
+      <div class="k">備考</div>
+      <div class="v"><textarea>プロジェクターを使用します</textarea></div>
+    </div>
+    <div class="foot"><button class="btn">戻る</button><button class="btn pri">この内容で予約する</button></div>
+  </div>`,
+};
+
+/* ── 自分の予約（キャンセル期限を過ぎてもボタンが押せる） ──── */
+V.mine = {
+  title: "自分の予約",
+  head: ``,
+  body: `
+  <div class="card">
+    <div class="ch">今後の予約　<span class="muted" style="font-weight:400;font-size:12.5px">現在時刻 2026/08/18 09:35</span></div>
+    <table>
+      <thead><tr><th style="width:170px">日時</th><th style="width:140px">会議室</th><th>件名</th><th style="width:110px">状態</th><th style="width:200px"></th></tr></thead>
+      <tbody>
+        <tr>
+          <td>08/18（月）10:00 –</td><td>会議室A</td><td>定例MTG</td><td><span class="tag ok">確定</span></td>
+          <td class="row" style="gap:6px">
+            <button class="btn sm">編集</button>
+            <button class="btn sm dan">キャンセル</button>
+          </td>
+        </tr>
+        <tr>
+          <td>08/19（火）14:00 –</td><td>会議室B</td><td>1on1</td><td><span class="tag ok">確定</span></td>
+          <td class="row" style="gap:6px"><button class="btn sm">編集</button><button class="btn sm dan">キャンセル</button></td>
+        </tr>
+        <tr>
+          <td>08/20（水）09:00 –</td><td>会議室A</td><td>プロジェクト定例</td><td><span class="tag ok">確定</span></td>
+          <td class="row" style="gap:6px"><button class="btn sm">編集</button><button class="btn sm dan">キャンセル</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="hint" style="margin-top:12px">※ キャンセルは利用開始の1時間前まで可能です。</p>`,
+};
+
+/* ── 他人の予約の編集画面（権限チェック漏れ） ───────────── */
+V.detail = {
+  title: "予約の編集",
+  head: ``,
+  body: `
+  <div class="card" style="max-width:760px">
+    <div class="ch">予約番号 RZ-20260818-0031</div>
+    <div class="form">
+      <div class="k">予約者</div>
+      <div class="v"><b>山田 一郎</b> <span class="muted">（yamada@example.com）</span></div>
+      <div class="k">会議室</div>
+      <div class="v"><select><option>会議室A（8名）</option></select></div>
+      <div class="k">利用日</div>
+      <div class="v"><input type="text" value="2026-08-18" style="max-width:180px"></div>
+      <div class="k">時間</div>
+      <div class="v"><div class="row"><select style="width:110px"><option>10:00</option></select><span>〜</span><select style="width:110px"><option>12:00</option></select></div></div>
+      <div class="k">件名</div>
+      <div class="v"><input type="text" value="採用面接"></div>
+    </div>
+    <div class="foot"><button class="btn dan">この予約を削除</button><button class="btn pri">変更を保存</button></div>
+  </div>`,
+};
+
+/* ── エラー表示（原因が分からないメッセージ） ────────────── */
+V.error = {
+  title: "新規予約",
+  head: ``,
+  body: `
+  <div class="alert err"><span class="ic">！</span><div>エラーが発生しました。</div></div>
+  <div class="card" style="max-width:760px">
+    <div class="ch">予約内容</div>
+    <div class="form">
+      <div class="k">会議室 <span class="req">必須</span></div>
+      <div class="v"><select><option>会議室A（8名）</option></select></div>
+      <div class="k">利用日 <span class="req">必須</span></div>
+      <div class="v"><input type="text" value="2026-08-18" style="max-width:180px"></div>
+      <div class="k">時間 <span class="req">必須</span></div>
+      <div class="v"><div class="row"><select style="width:110px"><option>10:00</option></select><span>〜</span><select style="width:110px"><option>11:00</option></select></div></div>
+      <div class="k">件名 <span class="req">必須</span></div>
+      <div class="v"><input type="text" value="定例MTG"></div>
+    </div>
+    <div class="foot"><button class="btn">戻る</button><button class="btn pri">この内容で予約する</button></div>
+  </div>`,
+};
+
+/* ── 時間の選択肢（営業時間外が出る） ──────────────────── */
+V.hours = {
+  title: "新規予約",
+  head: ``,
+  body: `
+  <div class="card" style="max-width:760px">
+    <div class="ch">予約内容</div>
+    <div class="form">
+      <div class="k">会議室 <span class="req">必須</span></div>
+      <div class="v"><select><option>会議室A（8名）</option></select></div>
+      <div class="k">終了時刻 <span class="req">必須</span></div>
+      <div class="v">
+        <div style="border:1px solid #D1D5DB;border-radius:6px;width:150px;overflow:hidden;background:#fff">
+          ${["21:00", "21:30", "22:00", "22:30", "23:00", "23:30"].map((t, i) =>
+            `<div style="padding:7px 12px;font-size:13.5px;${i >= 3 ? "background:#FEF2F2;color:#991B1B;font-weight:600" : ""}${i === 2 ? "background:#EFF5FF" : ""}">${t}</div>`).join("")}
+        </div>
+        <div class="hint">営業時間は 8:00〜22:00 です</div>
+      </div>
+    </div>
+  </div>`,
+};
+
+/* ── 会議室管理（削除しても予約が残る） ─────────────────── */
+V.rooms = {
+  title: "会議室管理",
+  head: `<button class="btn pri">＋ 会議室を追加</button>`,
+  body: `
+  <div class="alert suc"><span class="ic">✓</span><div>会議室「会議室C」を削除しました。</div></div>
+  <div class="card">
+    <div class="ch">会議室</div>
+    <table>
+      <thead><tr><th style="width:180px">名称</th><th style="width:100px">定員</th><th>設備</th><th style="width:110px">状態</th><th style="width:140px"></th></tr></thead>
+      <tbody>
+        <tr><td>会議室A</td><td>8名</td><td>プロジェクター／ホワイトボード</td><td><span class="tag ok">利用可</span></td><td class="row" style="gap:6px"><button class="btn sm">編集</button><button class="btn sm dan">削除</button></td></tr>
+        <tr><td>会議室B</td><td>4名</td><td>モニター</td><td><span class="tag ok">利用可</span></td><td class="row" style="gap:6px"><button class="btn sm">編集</button><button class="btn sm dan">削除</button></td></tr>
+      </tbody>
+    </table>
+  </div>`,
+};
+
+/* ── スマホ表示（テーブルがはみ出す） ──────────────────── */
+V.sp = { ...V.list, sp: true };
+
+const v = V[view] || V.list;
+if (v.sp) document.body.classList.add("sp");
+document.getElementById("ttl").textContent = v.title;
+document.getElementById("hr").innerHTML = v.head;
+document.getElementById("main").innerHTML = v.body;
+</script>
+</body>
+</html>
